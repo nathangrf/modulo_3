@@ -1,0 +1,184 @@
+\documentclass[12pt, a4paper]{article}
+
+% --- Paquetes de Idioma y Formato ---
+\usepackage[utf8]{inputenc}
+\usepackage[spanish, es-tabla]{babel}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{parskip} % Espaciado automático entre párrafos
+
+% --- Paquetes de Gráficos y Tablas ---
+\usepackage{graphicx}
+\usepackage{booktabs} % Tablas estilo académico/profesional
+\usepackage{tabularx} % Tablas con ancho automático
+\newcolumntype{Y}{>{\centering\arraybackslash}X} % Columna X centrada
+
+% --- Paquetes de Matemáticas y Enlaces ---
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    pdftitle={Informe de Simulación de Industria},
+}
+
+% --- Configuración de la Portada ---
+\title{
+    \vspace{2cm}
+    \textbf{\Large Informe de Simulación de Industria} \\
+    \vspace{0.5cm}
+    \Large Modelado, Análisis Teórico y Optimización Financiera de una Línea de Envasado de Bebidas \\
+    \vspace{1.5cm}
+}
+\author{
+    \textbf{Integrantes del Grupo:} \\
+    Calderon, Bautista \\
+    Cerdan, Lisandro \\
+    De Miguel, Alejo \\
+    Figuera, Luciano \\
+    Graff, Nathan \\
+    Moreschi, Facundo \\
+    \vspace{1.5cm} \\
+    \textbf{Carrera:} Ingeniería Industrial
+}
+\date{Mayo, 2026}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty} % Quita el número de página de la portada
+\newpage
+
+% --- Índice ---
+\tableofcontents
+\newpage
+
+% --- Cuerpo del Documento ---
+
+\section{Marco Teórico: ¿Qué es SIMUL8?}
+La Simulación de Eventos Discretos (SED) es una rama fundamental de la Investigación Operativa utilizada para imitar el comportamiento de sistemas reales a lo largo del tiempo. SIMUL8 es un software profesional de clase mundial diseñado específicamente para este propósito. Permite a los ingenieros crear ``gemelos digitales'' de instalaciones industriales para analizar flujos de trabajo, identificar cuellos de botella, probar reconfiguraciones de \textit{layout} y evaluar decisiones financieras sin interrumpir la producción real ni incurrir en costos de capital.
+
+A diferencia de los modelos estáticos (como una hoja de cálculo en Excel), SIMUL8 incorpora el factor de la variabilidad estocástica (aleatoriedad). Las máquinas fallan, los clientes no llegan a un ritmo constante y los tiempos de procesamiento fluctúan.
+
+\subsection{Elementos Fundamentales del Software}
+Para construir cualquier sistema productivo, SIMUL8 utiliza una arquitectura basada en objetos interconectados:
+
+\begin{itemize}
+    \item \textbf{Start Point (Punto de Entrada):} Genera las entidades o \textit{Work Items} (botellas vacías, clientes, órdenes). Su inyección al sistema se gobierna por distribuciones de probabilidad.
+    \item \textbf{Work Center (Centro de Trabajo / Máquina):} Estaciones donde ocurre la transformación. Consumen tiempo de ciclo (\textit{Timing}) y están sujetas a eficiencias y averías mecánicas (\textit{Breakdowns}).
+    \item \textbf{Queue (Cola / Buffer):} Zonas de almacenamiento temporal, como cintas transportadoras o estanterías. Absorben las fluctuaciones entre estaciones y son críticas para definir si un sistema es \textit{Push} o \textit{Pull} mediante la configuración de su capacidad física (\textit{Maximum Size}).
+    \item \textbf{End Point (Punto de Salida):} Sumideros donde los \textit{items} abandonan el sistema. Actúan como contadores para métricas de éxito (Ventas) o de calidad (Mermas/\textit{Scrap}).
+    \item \textbf{Routing (Rutas):} Las conexiones lógicas entre objetos. Permiten establecer disciplinas de flujo simples o complejas (ensambles, ruteo por porcentajes, prioridades).
+    \item \textbf{Resource (Recursos):} Elementos restrictivos, como operarios o herramientas especiales, que una máquina debe ``adquirir'' para poder funcionar o ser reparada.
+\end{itemize}
+
+
+\section{Metodología: Construcción Paso a Paso del Gemelo Digital}
+El desarrollo de nuestra línea industrial automatizada de envasado de bebidas requirió una programación metódica y estructurada, ejecutada en las siguientes fases:
+
+\subsection{Pio 1: Mapeo del Layout y Flujo Físico}
+Se dispusieron en la interfaz gráfica los objetos correspondientes al flujo real de una planta de envasado de bebidas. Se insertaron dos \textit{Start Point} para la llegada de botellas vacías, conectado a los \textit{Work Centers} en paralelo, separados por \textit{Queues} (cintas transportadoras). El flujo principal se detalla en el modelo implementado.
+
+\begin{subfigure}{\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{Captura de pantalla 2026-05-27 194533.png}
+    \caption{}
+  \end{subfigure}\hfill
+
+Las botellas detectadas como defectuosas en las inspecciones automáticas son derivadas a la Quitadora de Etiquetas antes de su descarte o reproceso.
+
+\subsection{Paso 2: Parametrización de Tiempos Estocásticos}
+Para dotar al modelo de rigor científico, se abandonaron los tiempos fijos determinísticos. Se programó cada estación con distribuciones específicas que reflejan la realidad operativa (ver Tabla \ref{tab:tiempos}).
+
+\begin{table}[htbp]
+    \centering
+    \caption{Distribuciones de probabilidad y tiempos por estación.}
+    \label{tab:tiempos}
+    \vspace{0.2cm}
+    \begin{tabularx}{\textwidth}{l l X}
+        \toprule
+        \textbf{Estación} & \textbf{Distribución} & \textbf{Parámetro} \\
+        \midrule
+        Llenadoras & Normal & $\mu$ variable, $\sigma = 0,01$ \\
+        Tapadora & Fixed & 0,9 botellas/s \\
+        Etiquetadora & Fixed & 0,9 botellas/s \\
+        Inspección 1 & Fixed & 0,9 botellas/s \\
+        Inspección 2 & Fixed & 0,9 botellas/s \\
+        Quitadora de Etiquetas & Average & 1 botella/s \\
+        Centro de Ventas & Average & 1 botella/s \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+\subsection{Paso 3: Confiabilidad y Averías (Breakdowns)}
+Se configuró el menú de \textit{Efficiency} para modelar la realidad del piso de planta. Las llenadoras, como máquinas de mayor complejidad mecánica y cuello de botella del sistema, fueron parametrizadas con distribución Normal para capturar la variabilidad en sus tiempos de ciclo ($\sigma = 0,01$), representando fluctuaciones por cambios de viscosidad del líquido, temperatura, y desgaste de válvulas dosificadoras.
+
+\subsection{Paso 4: Rutas No Lineales y Control de Calidad}
+Se implementó un sistema de control de calidad en cascada. En cada estación de inspección automática (Inspección 1 e Inspección 2) se configuró la regla de salida por porcentajes (\textit{Routing Out $\rightarrow$ Percent}):
+\begin{itemize}
+    \item \textbf{90\%:} Botellas conformes que avanzan hacia la siguiente etapa del proceso.
+    \item \textbf{10\%:} Botellas defectuosas que son derivadas a la Quitadora de Etiquetas para su procesamiento y posterior descarte.
+\end{itemize}
+
+En la Inspección Humana, la lógica es diferente, contemplando la capacidad de reclasificación del operario:
+\begin{itemize}
+    \item \textbf{10\%:} Botellas definitivamente defectuosas, derivadas al \textit{End Point} de \textit{Scrap}.
+    \item \textbf{45\%:} Botellas reprocesables, reenviadas a la Llenadora 1.
+    \item \textbf{45\%:} Botellas reprocesables, reenviadas a la Llenadora 2.
+\end{itemize}
+
+\subsection{Paso 5: Simulación Transaccional (Mercado)}
+Se modeló la demanda agregando un nuevo \textit{Start Point} paralelo llamado ``Llegada de Pedidos'' con distribución exponencial. El cruce físico-comercial se logró creando un \textit{Work Center} de ``Ventas'' con distribución \textit{Average} de 1 botella/segundo, programado con la disciplina de entrada \textit{Routing In $\rightarrow$ Collect (Match)}. Esta función obliga a la máquina a no procesar nada hasta reunir exactamente 1 botella del almacén + 1 Pedido del Mercado.
+
+\subsection{Paso 6: Restricciones de Mano de Obra (Resources)}
+Se insertaron objetos \textit{Resource} para representar al personal operativo. El modelo contempla dos trabajadores asignados:
+\begin{itemize}
+    \item \textbf{Operario 1 - Inspector Humano:} Asignado al Centro de Inspección Humana, responsable de la clasificación final de botellas con observaciones de calidad.
+    \item \textbf{Operario 2 - Empleado de Ventas:} Asignado al Centro de Ventas, gestiona el \textit{matching} entre el inventario de botellas terminadas y los pedidos del mercado.
+\end{itemize}
+Ninguna máquina puede avanzar si no tiene un recurso disponible, garantizando que el modelo sea fiel a la restricción real de personal.
+
+
+\section{Análisis de Resultados y Estado Financiero Final}
+La dimensión más crítica del proyecto fue la habilitación del módulo \textit{Finance}. Se asignó un costo unitario de materia prima de \$900 por botella vacía en la entrada, y se definió un precio de venta de \$40.000 en el \textit{End Point} de Ventas, representando el valor de mercado del producto terminado.
+
+El proyecto incurrió en un costo inicial de inversión de \$88.421.383,21, contemplando la infraestructura, maquinaria y puesta en marcha de la línea completa de envasado.
+
+Al finalizar la simulación, con un total de 2.384 botellas vendidas, se obtuvieron los estados detallados en la Tabla \ref{tab:financiero}.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Balance y Estado Financiero Final de la Simulación.}
+    \label{tab:financiero}
+    \vspace{0.2cm}
+    \begin{tabularx}{0.8\textwidth}{X r}
+        \toprule
+        \textbf{Concepto} & \textbf{Valor (\$)} \\
+        \midrule
+        Precio de venta por botella & \$40.000,00 \\
+        Unidades vendidas & 2.384 botellas \\
+        Ingresos Totales (\textit{Revenue}) & \$95.360.000,00 \\
+        Costo inicial del proyecto & \$88.421.383,21 \\
+        \midrule
+        \textbf{Utilidad Neta (\textit{Profit})} & \textbf{\$6.938.616,79} \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+\textbf{Diagnóstico:} El sistema logró generar un margen positivo de \$6.938.616,79. Este resultado demuestra que la filosofía de producción implementada, sincronizada con la demanda real del mercado, permite recuperar la inversión inicial y generar rentabilidad efectiva. El control de calidad en cascada (inspecciones automáticas + inspección humana con reproceso) minimizó el desperdicio estructural al redirigir botellas recuperables al inicio de la línea en lugar de descartarlas, optimizando el uso de la materia prima pagada a \$900 por unidad.
+
+
+\section{Conclusiones}
+La simulación de la línea de envasado de bebidas en SIMUL8 arrojó las siguientes conclusiones clave:
+
+\begin{enumerate}
+    \item \textbf{El control de calidad en cascada es financieramente superior:} La combinación de dos inspecciones automáticas (10\% de rechazo cada una) con una inspección humana final (con capacidad de reproceso al 90\%) reduce drásticamente el costo de la no calidad, convirtiendo botellas potencialmente perdidas en producto vendible.
+    \item \textbf{La distribución Normal en las llenadoras es crítica:} Parametrizar las máquinas de mayor complejidad con variabilidad estocástica ($\sigma = 0,01$) permite identificar cuellos de botella reales y no subestimar los tiempos de ciclo, lo que hubiera conducido a proyecciones financieras irreales.
+    \item \textbf{Los recursos humanos impactan severamente en los costos fijos:} Un modelo no es válido si ignora que la inspección humana y la gestión de ventas requieren personal permanente que consume presupuesto independientemente del volumen producido.
+    \item \textbf{SIMUL8 como auditor estratégico:} El software demostró que con 2.384 ventas a \$40.000 y una inversión inicial de \$88.421.383,21, el margen de \$6.938.616,79 obtenido es un resultado real y ejecutable que contempla de manera honesta todos los costos operativos del sistema.
+    \item \textbf{La sincronización producción-demanda es la clave de la rentabilidad:} Al disciplinar el flujo de botellas con el módulo de Ventas (\textit{Collect Match}) y el reproceso inteligente desde Inspección Humana, la línea opera eficientemente sin acumular inventario muerto ni incurrir en sobreproducción.
+\end{enumerate}
+
+\end{document}
